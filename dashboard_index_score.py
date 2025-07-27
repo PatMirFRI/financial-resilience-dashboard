@@ -4,11 +4,7 @@
 
 # In[ ]:
 
-
 # Step 1: Setup and Imports
-import os
-os.chdir(r"C:\Users\PatriceMirindi\Desktop\Finance resilience institute\Interactive dashboard")
-
 import pandas as pd
 import numpy as np
 import streamlit as st
