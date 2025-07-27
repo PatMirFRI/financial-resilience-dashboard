@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
-import os
-os.chdir(r"C:\Users\PatriceMirindi\Desktop\Finance resilience institute\Interactive dashboard")
-print(os.getcwd())
-
 
 # In[ ]:
 
