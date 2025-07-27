@@ -1,0 +1,7 @@
+
+cd "C:\Users\PatriceMirindi\Desktop\Finance resilience institute\Interactive dashboard"
+
+jupyter nbconvert --to python dashboard.ipynb
+
+streamlit run dashboard.py
+

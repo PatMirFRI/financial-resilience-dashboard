@@ -1,0 +1,6 @@
+streamlit
+pandas
+numpy
+plotly
+openpyxl  # (for reading Excel)
+shapely   # (if you use centroids for map zoom)
