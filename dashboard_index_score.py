@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# In[2]:
 
-# In[ ]:
 
 # Step 1: Setup and Imports
 import pandas as pd
@@ -11,7 +11,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import json
 
-st.set_page_config(page_title="Financial Resilience Dashboard - Canada", page_icon="🍁", layout="wide")
+st.set_page_config(page_title="Financial Resilience Score Dashboard - Canada", page_icon="🍁", layout="wide")
 
 
 # In[ ]:
@@ -39,6 +39,44 @@ geojson = load_geojson()
 
 
 # Step 3: Sidebar - Year and Province(s) Selection
+# --- CSS for sidebar width and style (add after your page config) ---
+st.markdown("""
+<style>
+section[data-testid="stSidebar"] { width: 375px !important; }
+.main > div { padding-left: 400px !important; }
+.sidebar-info { background:#f0f2f6;padding:1rem 0.7rem;
+    border-radius:0.5rem; border-left:4px solid #00AEEF;
+    font-size:0.85rem; line-height:1.5;}
+.color-legend-item { display:flex; align-items:center; margin:8px 0; font-size:0.95rem;}
+.color-box { width:20px; height:20px; border-radius:4px; margin-right:10px;
+    border:1px solid #ccc; }
+</style>
+""", unsafe_allow_html=True)
+
+
+# Info and color legend
+with st.sidebar.expander("ℹ️ Dashboard Information", expanded=False):
+    st.markdown(
+        "<div class='sidebar-info'><b>About this Dashboard</b><br>"
+        "• Data focus on the Mean Financial Resilience Score<br>"
+        "• Always cite the institute<br>"
+        "• Mode data are available through our reports<br>"
+        "• All data from Financial Resilience Institute studies<br>"
+        "• Contact us at: info@finresilienceinsitute.org</div>",
+        unsafe_allow_html=True
+    )
+with st.sidebar.expander("🎨 Segment Color Legend", expanded=True):
+    st.markdown("""
+    <div style='border-radius:8px; padding: 18px 15px 10px 15px; background-color: #E8F4FB; border: 1px solid #BFE1FC; margin-bottom: 20px;'>
+    <b>Color Legend:</b><br>
+    <span style='color:#C00000; font-size:22px; vertical-align:middle'>●</span> <b>Extremely Vulnerable</b> (0–30)<br>
+    <span style='color:#ED175B; font-size:22px; vertical-align:middle'>●</span> <b>Financially Vulnerable</b> (30.0–50)<br>
+    <span style='color:#1E196A; font-size:22px; vertical-align:middle'>●</span> <b>Approaching Resilience</b> (50.0–70)<br>
+    <span style='color:#00AEEF; font-size:22px; vertical-align:middle'>●</span> <b>Financially Resilient</b> (70.0–100)
+    </div>
+    """, unsafe_allow_html=True)
+
+st.sidebar.markdown("---")
 
 st.sidebar.header("🔍 Filter Options")
 year_options = sorted(dataset['Survey round'].dropna().unique().tolist())
@@ -53,18 +91,11 @@ selected_provinces = st.sidebar.multiselect(
 
 # Add a divider
 st.sidebar.markdown("---")
-
-# Add information box
-st.sidebar.markdown("""
-<div style='border-radius:8px; padding: 18px 15px 10px 15px; background-color: #E8F4FB; border: 1px solid #BFE1FC; margin-bottom: 20px;'>
-<b>Color Legend:</b><br>
-<span style='color:#C00000; font-size:22px; vertical-align:middle'>●</span> <b>Extremely Vulnerable</b> (0–30)<br>
-<span style='color:#ED175B; font-size:22px; vertical-align:middle'>●</span> <b>Financially Vulnerable</b> (30.0–50)<br>
-<span style='color:#1E196A; font-size:22px; vertical-align:middle'>●</span> <b>Approaching Resilience</b> (50.0–70)<br>
-<span style='color:#00AEEF; font-size:22px; vertical-align:middle'>●</span> <b>Financially Resilient</b> (70.0–100)
-</div>
-""", unsafe_allow_html=True)
-
+st.sidebar.markdown(
+    "<div style='text-align:center; color:#888; font-size:0.80rem; padding:12px 0;'>"
+    "© 2025 Financial Resilience Institute<br>All Rights Reserved</div>",
+    unsafe_allow_html=True
+)
 
 
 # In[ ]:
@@ -304,48 +335,4 @@ with col2:
 #    )
 
 #st.dataframe(table_data.style.format({'Resilience Score': '{:.1f}'}), use_container_width=True, height=400)
-
-
-# In[ ]:
-
-
-show_segments = st.sidebar.checkbox("Show population segments pie chart", value=False)
-
-# Step 9: Segment Distribution Pie Chart
-
-if show_segments and (
-    ("All provinces" not in selected_provinces or len(selected_provinces) == 1)
-    and len(display_provinces) == 1
-):
-    province = display_provinces[0]
-    st.markdown("---")
-    st.markdown("### 📊 Population Distribution by Resilience Category")
-    seg = segments_data[
-        (segments_data['Province'] == province) & 
-        (segments_data['Survey round'] == selected_year)
-    ]
-    if not seg.empty:
-        import plotly.express as px
-        fig_pie = px.pie(
-            seg, values='Proportion', names='Index segments',
-            color='Index segments',
-            color_discrete_map={
-                'Extremely Vulnerable': '#C00000',
-                'Financially Vulnerable': '#ED175B',
-                'Approaching Resilience': '#1E196A',
-                'Financially Resilient': '#00AEEF'
-            },
-            title=f"Population Distribution - {province} ({selected_year})"
-        )
-        fig_pie.update_traces(textposition='inside', textinfo='percent+label')
-        fig_pie.update_layout(height=400, showlegend=False, margin=dict(l=20, r=20, t=40, b=20))
-        st.plotly_chart(fig_pie, use_container_width=True)
-
-
-# In[ ]:
-
-
-# Step 10: Footer and Color Legend
-
-st.markdown("---")
 
