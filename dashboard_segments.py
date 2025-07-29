@@ -114,7 +114,6 @@ SEGMENT_COLORS = {
 # In[ ]:
 
 
-# Step 4: Sidebar Filters - Enhanced Version
 # --- CSS for sidebar width and style (add after your page config) ---
 st.markdown("""
 <style>
@@ -180,7 +179,7 @@ def sort_key(val):
 latest_round = max(year_options, key=sort_key) if year_options else ""
 
 with col1:
-    button_label = f"Latest Survey Round ({latest_round})" if latest_round else "Latest Survey Round"
+    button_label = f"Latest Round" if latest_round else "Latest Survey Round"
     if st.button(button_label, key="preset1", use_container_width=True):
         st.session_state.year_filter = [latest_round] if latest_round else []
         st.session_state.province_filter = ['Canada (Overall)']
@@ -228,7 +227,7 @@ with st.sidebar.container():
             st.rerun()
     with colp2:
         if st.button("Clear All", key="clear_prov", use_container_width=True):
-            st.session_state.province_filter = []
+            st.session_state.province_filter = ['Canada (Overall)']
             st.rerun()
     selected_provinces = st.multiselect(
         "Select provinces or Canada overall:",
@@ -275,24 +274,9 @@ chart_type = st.sidebar.radio(
     index=0,
     help="Choose how to visualize the data"
 )
-st.sidebar.markdown("---")
-
-# Download section
-if 'filtered' in locals() and not filtered.empty:
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### 📥 Export Data")
-    csv = filtered.to_csv(index=False)
-    st.sidebar.download_button(
-        label="⬇️ Download Filtered Data (CSV)",
-        data=csv,
-        file_name=f"FRI_data_{'-'.join(str(y) for y in selected_years)}.csv",
-        mime="text/csv",
-        help="Download the filtered dataset as CSV file",
-        use_container_width=True
-    )
-    st.sidebar.caption(f"Export contains {len(filtered):,} records")
 
 st.sidebar.markdown("---")
+
 st.sidebar.markdown(
     "<div style='text-align:center; color:#888; font-size:0.80rem; padding:12px 0;'>"
     "© 2025 Financial Resilience Institute<br>All Rights Reserved</div>",
@@ -862,15 +846,15 @@ else:
 # In[ ]:
 
 
-# Add this at the end of your Step 7, after all visualizations (and before the footer if present)
-# The download button will provide the current filtered data in CSV format
-csv_data = filtered.to_csv(index=False)
-st.sidebar.download_button(
+# Add this at the end of your Step 7, after all visualizations (and before the footer if present) 
+# The download button will provide the current filtered data in CSV format 
+csv_data = filtered.to_csv(index=False) 
+st.sidebar.download_button(     
     label="📥 Download Filtered Data (CSV)",
     data=csv_data,
     file_name=f"resilience_data_{'-'.join(str(y) for y in selected_years)}.csv",
     mime="text/csv"
-)
+    )
 
 
 # In[ ]:
