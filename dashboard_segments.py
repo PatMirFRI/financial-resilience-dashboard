@@ -141,7 +141,7 @@ with st.sidebar.expander("ℹ️ Dashboard Information", expanded=False):
         "• Contact us at: info@finresilienceinsitute.org</div>",
         unsafe_allow_html=True
     )
-with st.sidebar.expander("🎨 Segment Color Legend", expanded=True):
+with st.sidebar.expander("🎨 Segment Color Legend", expanded=False):
     st.markdown("""
     <div style='border-radius:8px; padding: 18px 15px 10px 15px; background-color: #E8F4FB; border: 1px solid #BFE1FC; margin-bottom: 20px;'>
     <b>Color Legend:</b><br>
