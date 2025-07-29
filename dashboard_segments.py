@@ -4,7 +4,7 @@
 # In[1]:
 
 
-# Step 1: Imports & Page Setup
+# Step 1: Imports & Page Setup (with sidebar width fix)
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -17,6 +17,63 @@ st.set_page_config(
     page_icon="🍁", 
     layout="wide"
 )
+
+# CSS to increase sidebar width and improve appearance
+st.markdown("""
+<style>
+    /* Increase sidebar width */
+    section[data-testid="stSidebar"] {
+        width: 375px !important;
+    }
+    
+    /* Adjust main content area */
+    .main > div {
+        padding-left: 400px !important;
+    }
+    
+    /* Improve sidebar content styling */
+    section[data-testid="stSidebar"] .stMarkdown {
+        font-size: 0.95rem;
+    }
+    
+    section[data-testid="stSidebar"] .stMultiSelect label {
+        font-weight: 600;
+        color: #262730;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Style the dividers */
+    section[data-testid="stSidebar"] hr {
+        margin: 1.5rem 0;
+    }
+    
+    /* Info box styling */
+    .sidebar-info {
+        background-color: #f0f2f6;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border-left: 4px solid #00AEEF;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+    
+    /* Color legend styling */
+    .color-legend-item {
+        display: flex;
+        align-items: center;
+        margin: 8px 0;
+        font-size: 0.9rem;
+    }
+    
+    .color-box {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        margin-right: 10px;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+</style>
+""", unsafe_allow_html=True)
 
 
 # In[2]:
@@ -57,55 +114,190 @@ SEGMENT_COLORS = {
 # In[ ]:
 
 
-# Step 4: Sidebar Filters
-st.sidebar.header("🔍 Filter Segments")
+# Step 4: Sidebar Filters - Enhanced Version
 
-# Year filter
+# Reset button at the top
+if st.sidebar.button("🔄 Reset All Filters", type="primary", use_container_width=True):
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.rerun()
+
+# Quick Presets Section
+st.sidebar.markdown("### ⚡ Quick Presets")
+col1, col2 = st.sidebar.columns(2)
+
+# We need to define these variables first before using them in presets
+# Get data options
 try:
     year_options = sorted(segments_data['Survey round'].dropna().unique().tolist())
-    selected_years = st.sidebar.multiselect(
-        "Survey Round(s):",
-        year_options,
-        default=[year_options[-1]] if year_options else []
+    province_options = ['Canada (Overall)'] + sorted(
+        [prov for prov in segments_data['Province'].dropna().unique() if prov != 'Canada (Overall)']
     )
-except KeyError:
-    st.error("Column 'Survey round' not found. Available columns: " + ", ".join(segments_data.columns))
-    st.stop()
+except:
+    year_options = []
+    province_options = ['Canada (Overall)']
+
+with col1:
+    latest_round = year_options[-1] if year_options else "June 2025"
+    button_label = f"Latest Round ({latest_round})"
+    if st.button("button_label", key="preset1", use_container_width=True):
+        if year_options:
+            st.session_state.year_filter = [year_options[-1]]
+            st.session_state.province_filter = ['Canada (Overall)']
+            st.session_state.segment_multiselect = ["All Segments"]
+            st.rerun()
+
+with col2:
+    if st.button("All Time", key="preset2", use_container_width=True):
+        st.session_state.year_filter = year_options
+        st.session_state.province_filter = ['Canada (Overall)']
+        st.session_state.segment_multiselect = ["All Segments"]
+        st.rerun()
+
+st.sidebar.markdown("---")
+
+# Filter Section
+# Year filter
+with st.sidebar.container():
+    st.markdown("**📅 Survey Round(s)**")
+    try:
+        selected_years = st.multiselect(
+            "Select one or more survey rounds:",
+            year_options,
+            default=st.session_state.get('year_filter', [year_options[-1]] if year_options else []),
+            key="year_filter",
+            help="Choose which survey rounds to include in the analysis"
+        )
+        
+        if selected_years:
+            st.caption(f"Selected: {len(selected_years)} round(s)")
+    except KeyError:
+        st.error("Survey round data not found")
+        selected_years = []
+
+st.sidebar.markdown("")
 
 # Province filter
-province_options = ['Canada (Overall)'] + sorted(
-    [prov for prov in segments_data['Province'].dropna().unique() if prov != 'Canada (Overall)']
-)
-selected_provinces = st.sidebar.multiselect(
-    "Province(s) or Canada:",
-    province_options,
-    default=['Canada (Overall)']
-)
+with st.sidebar.container():
+    st.markdown("**📍 Location(s)**")
+    
+    # Quick selection buttons
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        if st.button("All Provinces", key="all_prov", use_container_width=True):
+            st.session_state.province_filter = province_options
+            st.rerun()
+    with col2:
+        if st.button("Clear All", key="clear_prov", use_container_width=True):
+            st.session_state.province_filter = []
+            st.rerun()
+    
+    # Multiselect
+    selected_provinces = st.multiselect(
+        "Select provinces or Canada overall:",
+        province_options,
+        default=st.session_state.get('province_filter', ['Canada (Overall)']),
+        key="province_filter",
+        help="Choose geographic areas to analyze"
+    )
+    
+    if selected_provinces:
+        st.caption(f"Selected: {len(selected_provinces)} location(s)")
+
+st.sidebar.markdown("")
 
 # Segment filter
-segment_options = ["All Segments"] + SEGMENT_CATEGORIES
-selected_segments = st.sidebar.multiselect(
-    "Financial Resilience Segment(s):",
-    segment_options,
-    default=["All Segments"],
-    key="segment_multiselect"
+with st.sidebar.container():
+    st.markdown("**📊 Financial Resilience Segment(s)**")
+    
+    segment_options = ["All Segments"] + SEGMENT_CATEGORIES
+    
+    # Quick selection buttons
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        if st.button("All Segments", key="all_seg", use_container_width=True):
+            st.session_state.segment_multiselect = ["All Segments"]
+            st.rerun()
+    with col2:
+        if st.button("Clear All", key="clear_seg", use_container_width=True):
+            st.session_state.segment_multiselect = []
+            st.rerun()
+    
+    # Multiselect
+    selected_segments = st.multiselect(
+        "Select segments to display:",
+        segment_options,
+        default=st.session_state.get('segment_multiselect', ["All Segments"]),
+        key="segment_multiselect",
+        help="Choose which financial resilience segments to include"
+    )
+    
+    # Handle "All Segments" logic
+    if "All Segments" in selected_segments:
+        selected_segments = SEGMENT_CATEGORIES
+    elif not selected_segments:
+        selected_segments = SEGMENT_CATEGORIES
+    
+    st.caption(f"Selected: {len(selected_segments)} segment(s)")
+
+st.sidebar.markdown("---")
+chart_type = st.sidebar.radio(
+    "Chart Type:",
+    options=["Pie chart", "Bar chart", "Trended line chart"],
+    horizontal=True
 )
 
-# Segment selection logic
-if "All Segments" in selected_segments and len(selected_segments) > 1:
-    selected_segments = [seg for seg in selected_segments if seg != "All Segments"]
-elif not selected_segments or "All Segments" in selected_segments:
-    selected_segments = SEGMENT_CATEGORIES
+
+# Color legend
+with st.sidebar.expander("🎨 Segment Color Legend", expanded=True):
+    st.markdown("""
+    <div style='border-radius:8px; padding: 18px 15px 10px 15px; background-color: #E8F4FB; border: 1px solid #BFE1FC; margin-bottom: 20px;'>
+    <b>Color Legend:</b><br>
+    <span style='color:#C00000; font-size:22px; vertical-align:middle'>●</span> <b>Extremely Vulnerable</b> (0–30)<br>
+    <span style='color:#ED175B; font-size:22px; vertical-align:middle'>●</span> <b>Financially Vulnerable</b> (30.0–50)<br>
+    <span style='color:#1E196A; font-size:22px; vertical-align:middle'>●</span> <b>Approaching Resilience</b> (50.0–70)<br>
+    <span style='color:#00AEEF; font-size:22px; vertical-align:middle'>●</span> <b>Financially Resilient</b> (70.0–100)
+    </div>
+    """, unsafe_allow_html=True)
 
 
-# Add information box
+# Download section (only show if data is filtered)
+# Note: This assumes 'filtered' DataFrame exists from Step 5
+if 'filtered' in locals() and not filtered.empty:
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 📥 Export Data")
+    
+    csv = filtered.to_csv(index=False)
+    
+    st.sidebar.download_button(
+        label="⬇️ Download Filtered Data (CSV)",
+        data=csv,
+        file_name=f"FRI_data_{'-'.join(str(y) for y in selected_years)}.csv",
+        mime="text/csv",
+        help="Download the filtered dataset as CSV file",
+        use_container_width=True
+    )
+    
+    st.sidebar.caption(f"Export contains {len(filtered):,} records")
+
+
+# Information section
+with st.sidebar.expander("ℹ️ Dashboard Information", expanded=False):
+    st.markdown("""
+    <div class='sidebar-info'>
+        <b>About this Dashboard</b><br>
+        • Data updates quarterly<br>
+        • Gray areas in pie charts represent unselected segments<br>
+        • All data from Financial Resilience Institute surveys
+    </div>
+    """, unsafe_allow_html=True)
+
+# Footer
+st.sidebar.markdown("---")
 st.sidebar.markdown("""
-<div style='border-radius:8px; padding: 18px 15px 10px 15px; background-color: #E8F4FB; border: 1px solid #BFE1FC; margin-bottom: 20px;'>
-<b>Color Legend:</b><br>
-<span style='color:#C00000; font-size:22px; vertical-align:middle'>●</span> <b>Extremely Vulnerable</b> (0–30)<br>
-<span style='color:#ED175B; font-size:22px; vertical-align:middle'>●</span> <b>Financially Vulnerable</b> (30.0–50)<br>
-<span style='color:#1E196A; font-size:22px; vertical-align:middle'>●</span> <b>Approaching Resilience</b> (50.0–70)<br>
-<span style='color:#00AEEF; font-size:22px; vertical-align:middle'>●</span> <b>Financially Resilient</b> (70.0–100)
+<div style='text-align: center; color: #888; font-size: 0.75rem; padding: 10px 0;'>
+    © 2025 Financial Resilience Institute<br>
+    All Rights Reserved
 </div>
 """, unsafe_allow_html=True)
 
@@ -146,12 +338,7 @@ else:
 
 # Step 6: Visualization Choices and Main Title
 
-st.sidebar.markdown("---")
-chart_type = st.sidebar.radio(
-    "Chart Type:",
-    options=["Pie chart", "Bar chart", "Trended line chart"],
-    horizontal=True
-)
+
 
 # Main page title and subtitle
 st.title("🍁 Financial Resilience Segments Dashboard")
